@@ -1,0 +1,66 @@
+
+// API should be able to 
+
+// 1. RESPOND with info on
+// - product unit price for a given kind or set of products
+// - if a requested number of items can be shipped straight away
+//    ( API blocks both price and quantity within next 30 seconds or till rejected )
+
+// 2. PLACE an order
+//    If price is suitable and quantity needed can be shipped 
+//    and it is the best option for requestors
+//    it should enable to PLACE an order
+
+// 3. let requestor to IDENTIFY possible suppliers and product + delivery ratings/feedback
+
+// 4. CONFIRM shipment
+
+// 5. CONFIRM delivery
+
+// 6. PROVIDE rating/feedback
+
+
+// get delivery rating on all orders
+
+query {
+    orders {
+        id
+        feedbacks{
+            deliveryRating
+        }
+    }
+}
+
+// get product rating on all orders
+
+query {
+orders {
+  id
+  feedbacks{
+    productRating
+  }
+}
+}  
+
+// get delivery rating on a specific order
+
+query {
+orders(query: "o10") {
+  id
+  feedbacks{
+    deliveryRating
+  }
+}
+}  
+
+// get product rating on a specific order
+
+query {
+orders(query: "o10") {
+  id
+  feedbacks{
+    productRating
+  }
+}
+}  
+
