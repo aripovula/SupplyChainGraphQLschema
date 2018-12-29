@@ -1,13 +1,14 @@
-import {
-    GraphQLServer
-} from 'graphql-yoga'
+import { GraphQLServer } from 'graphql-yoga'
 import uuidv4 from 'uuid/v4'
 
-
 const companies = [{
-    id: 'entity1',
+    id: 'entity0',
     name: 'Assembler, Inc.',
     location: 'ACity, AB'
+}, {
+    id: 'entity1',
+    name: 'Manufacturer, Corp.',
+    location: 'BCity, AB'
 }, {
     id: 'entity2',
     name: 'Components, Co.',
@@ -18,7 +19,7 @@ const companies = [{
     location: 'CCity, AB'
 }, {
     id: 'entity4',
-    name: 'Supplied Ltd.',
+    name: 'Elements Ltd.',
     location: 'DCity, AB'
 }, {
     id: 'entity5',
@@ -27,43 +28,67 @@ const companies = [{
 
 }]
 
-const products = [{
-    id: 'prodA',
-    name: 'componentA',
-    price: 20,
-    producers: ['entity2', 'entity4']
-}, {
-    id: 'prodB',
-    name: 'componentB',
-    price: 30,
-    producers: ['entity3', 'entity5']
-}, {
-    id: 'prodC',
-    name: 'componentC',
-    price: 40,
-    producers: ['entity3', 'entity4']
-}]
+const OptionStatus = {
+    EFFECTIVE: 'EFFECTIVE',
+    USED: 'USED_DO_NOT_DELETE',
+    EXPIRED: 'EXPIRED'
+}
+
+const options = [{
+        id: 'optBD',
+        status: OptionStatus.EFFECTIVE,
+        products: [
+            { id: 'prodB', name: 'componentB', price: 20, offeredBy: 'entity4', available: 1000 },
+            { id: 'prodD', name: 'componentD', price: 15, offeredBy: 'entity5', available: 200 }
+        ]
+    }, {
+        id: 'optAD',
+        status: OptionStatus.EFFECTIVE,
+        products: [
+            { id: 'prodA', name: 'componentA', price: 10, offeredBy: 'entity2', available: 4250 },
+            { id: 'prodD', name: 'componentD', price: 16, offeredBy: 'entity3', available: 220 }
+        ]
+    }, {
+        id: 'optCE',
+        status: OptionStatus.EXPIRED,
+        products: [
+            { id: 'prodC', name: 'componentC', price: 4, offeredBy: 'entity3', available: 6400 },
+            { id: 'prodE', name: 'componentE', price: 2, offeredBy: 'entity5', available: 2380 }
+        ]
+    }];
+
+const OrderStatus = {
+    INFO_REQUESTED: 'INFO_REQUESTED',
+    PURCHASE_APPROVAL_PENDING: 'PURCHASE_APPROVAL_PENDING',
+    CONFIRMED_SHIPMENT_PENDING: 'CONFIRMED_SHIPMENT_PENDING',
+    SHIPPED: 'SHIPPED',
+    DELIVERED: 'DELIVERED',
+    REJECTED: 'REJECTED'
+}
 
 const orders = [{
     id: 'o10',
     volume: 100,
     time2deliver: 120,
+    status: OrderStatus.INFO_REQUESTED,
     orderingCo: 'entity1',
-    productOrdered: 'prodB',
+    optionDetails: options[0],
     feedbackID: 'fo100'
 }, {
     id: 'o11',
     volume: 200,
     time2deliver: 240,
+    status: OrderStatus.DELIVERED,
     orderingCo: 'entity1',
-    productOrdered: 'prodC',
+    optionDetails: options[1],
     feedbackID: 'fo110'
 }, {
     id: 'o12',
     volume: 100,
     time2deliver: 120,
+    status: OrderStatus.CONFIRMED_SHIPMENT_PENDING,
     orderingCo: 'entity2',
-    productOrdered: 'prodC',
+    optionDetails: options[2],
     feedbackID: 'fo120'
 }]
 
@@ -97,18 +122,13 @@ const feedbacks = [{
 const typeDefs = `
     type Query {
         companies(query: String): [Company!]!
-        products(query: String): [Product!]!
+        options(query: String): [Option!]!
         orders(query: String): [Order]
         feedbacks: [Feedback!]!
-        company: Company!
-        product: Product!
-        order: Order!
     }
 
     type Mutation {
         createCompany(name: String!, location: String!): Company!
-        createProduct(name: String!, price: Int!): Product!
-        createOrder(orderingCo: String!, productOrdered: String!, volume: Int!, time2deliver: Int!): Order!
         createFeedback(productRating: Float!, deliveryRating: Float!, author: ID!, orderNo: ID!): Feedback!
     }
 
@@ -124,14 +144,23 @@ const typeDefs = `
     type Product {
         id: ID!
         name: String!
-        price: Int!
-        feedbacks: [Feedback!]!
+        price: Float!
+        offeredBy: Company!
+        available: Int
+        orderedVolume: Int
+    }
+
+    type Option {
+        id: ID!
+        status: String!
+        products: [Product!]!
     }
 
     type Order {
         id: ID!
         orderingCo: Company!
-        productOrdered: Product!
+        optionDetails: Option!
+        status: String!,
         volume: Int!
         time2deliver: Int!
         feedbacks: [Feedback!]!
@@ -158,53 +187,35 @@ const resolvers = {
                 return company.name.toLowerCase().includes(args.query.toLowerCase())
             })
         },
-        products(parent, args, ctx, info) {
+        options(parent, args, ctx, info) {
             if (!args.query) {
-                return products
+                return options
             }
 
-            return products.filter((product) => {
-                return product.name.toLowerCase().includes(args.query.toLowerCase())
+            return options.filter((option) => {
+                const isIdMatch = option.id.toLowerCase().includes(args.query.toLowerCase());
+                const isStatusMatch = option.status.toLowerCase().includes(args.query.toLowerCase());
+                const isProductsMatch = option.products.toString().toLowerCase().includes(args.query.toLowerCase());
+                return isIdMatch || isStatusMatch || isProducstMatch;
             })
         },
         orders(parent, args, ctx, info) {
-            console.log('in ABC args = ', args.query);
-            console.log('orders', orders);
-
             if (!args.query) {
-                console.log(' in !args.query NUL');
                 return orders
             }
 
             return orders.filter((order) => {
-                console.log('in ABC order = ', order);
                 const isOrderingCoMatch = order.orderingCo.toLowerCase().includes(args.query.toLowerCase());
                 const isOrderIdMatch = order.id.toLowerCase().includes(args.query.toLowerCase());
-                const isProductMatch = order.productOrdered.toLowerCase().includes(args.query.toLowerCase());
-                console.log('in ABC isOrderingCoMatch = ', isOrderingCoMatch, ' isProductMatch =', isProductMatch + ' isOrderIdMatch = ', isOrderIdMatch);
+                const isProductMatch = order.optionDetails.toString().toLowerCase().includes(args.query.toLowerCase());
                 return isOrderingCoMatch || isOrderIdMatch || isProductMatch;
             })
         },
         feedbacks(parent, args, ctx, info) {
             return feedbacks
-        },
-        company() {
-            return {
-                id: '123098',
-                name: 'M Supplies',
-                location: 'AnoVille'
-            }
-        },
-        order() {
-            return {
-                id: '092',
-                orderingCo: 'GraphQL 101',
-                productOrdered: '1A',
-                volume: 200,
-                time2deliver: 120
-            }
         }
     },
+
     Order: {
         orderingCo(parent, args, ctx, info) {
             return companies.find((company) => {
@@ -212,10 +223,11 @@ const resolvers = {
                 return company.id === parent.orderingCo
             });
         },
-        productOrdered(parent, args, ctx, info) {
-            return products.find((product) => {
-                console.log('company.id = ', product.id);
-                return product.id === parent.productOrdered
+        optionDetails(parent, args, ctx, info) {
+            console.log('parent.optionDetails = ', parent.optionDetails.id);
+            return options.find((option) => {
+                console.log('option.id = ', option.id);
+                return option.id === parent.optionDetails.id
             });
         },
         feedbacks(parent, args, ctx, info) {
@@ -237,11 +249,20 @@ const resolvers = {
         }
     },
     Product: {
-        feedbacks(parent, args, ctx, info) {
-            return feedbacks.filter((feedback) => {
-                return feedback.author === parent.id
+        offeredBy(parent, args, ctx, info) {
+            return companies.find((company) => {
+                return company.id === parent.offeredBy
             })
         }
+    },
+    Option: {
+        // products(parent, args, ctx, info) {
+        //     return optionDetails.products.filter((product) => {
+        //         console.log('product ID ID', product.id);
+                
+        //         return product.id.toString().includes(parent.id);
+        //     })
+        // }
     },
     Company: {
         orders(parent, args, ctx, info) {
@@ -260,7 +281,6 @@ const resolvers = {
             })
         }
     }
-
 }
 
 const server = new GraphQLServer({
