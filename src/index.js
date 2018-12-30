@@ -1,61 +1,122 @@
-import { GraphQLServer } from 'graphql-yoga'
+import {
+    GraphQLServer
+} from 'graphql-yoga'
 import uuidv4 from 'uuid/v4'
 
 const companies = [{
     id: 'entity0',
     name: 'Assembler, Inc.',
+    creditRating: 'Abb',
     location: 'ACity, AB'
 }, {
     id: 'entity1',
     name: 'Manufacturer, Corp.',
+    creditRating: 'Abb',
     location: 'BCity, AB'
 }, {
     id: 'entity2',
     name: 'Components, Co.',
+    creditRating: 'Abb',
     location: 'BCity, AB'
 }, {
     id: 'entity3',
     name: 'Parts Ltd.',
+    creditRating: 'Abb',
     location: 'CCity, AB'
 }, {
     id: 'entity4',
     name: 'Elements Ltd.',
+    creditRating: 'Abb',
     location: 'DCity, AB'
 }, {
     id: 'entity5',
     name: 'Fittings Co.',
+    creditRating: 'Abb',
     location: 'CCity, AB'
-
 }]
+
+const blockchainBlocks = [{
+    id: '0',
+    marketplaceSignatureOnDeal: '000012345',
+    previousHashOnDeal: '000000',
+    hashOnDeal: '00001234',
+    nonce: 54321
+}, {
+    id: '1',
+    marketplaceSignatureOnDeal: '0000123456',
+    previousHashOnDeal: '00001234',
+    hashOnDeal: '00001234567890',
+    nonce: 54321
+}, {
+    id: '2',
+    marketplaceSignatureOnDeal: '000012345678',
+    previousHashOnDeal: '00001234567890',
+    hashOnDeal: '000012345',
+    nonce: 54321
+}];
 
 const OptionStatus = {
     EFFECTIVE: 'EFFECTIVE',
+    ON_HOLD_30SEC: 'ON_HOLD_30SEC',
     USED: 'USED_DO_NOT_DELETE',
     EXPIRED: 'EXPIRED'
 }
 
 const options = [{
-        id: 'optBD',
-        status: OptionStatus.EFFECTIVE,
-        products: [
-            { id: 'prodB', name: 'componentB', price: 20, offeredBy: 'entity4', available: 1000 },
-            { id: 'prodD', name: 'componentD', price: 15, offeredBy: 'entity5', available: 200 }
-        ]
-    }, {
-        id: 'optAD',
-        status: OptionStatus.EFFECTIVE,
-        products: [
-            { id: 'prodA', name: 'componentA', price: 10, offeredBy: 'entity2', available: 4250 },
-            { id: 'prodD', name: 'componentD', price: 16, offeredBy: 'entity3', available: 220 }
-        ]
-    }, {
-        id: 'optCE',
-        status: OptionStatus.EXPIRED,
-        products: [
-            { id: 'prodC', name: 'componentC', price: 4, offeredBy: 'entity3', available: 6400 },
-            { id: 'prodE', name: 'componentE', price: 2, offeredBy: 'entity5', available: 2380 }
-        ]
-    }];
+    id: 'optBD',
+    status: OptionStatus.EFFECTIVE,
+    products: [{
+            id: 'prodB',
+            name: 'componentB',
+            price: 20,
+            offeredBy: 'entity4',
+            available: 1000
+        },
+        {
+            id: 'prodD',
+            name: 'componentD',
+            price: 15,
+            offeredBy: 'entity5',
+            available: 200
+        }
+    ]
+}, {
+    id: 'optAD',
+    status: OptionStatus.EFFECTIVE,
+    products: [{
+            id: 'prodA',
+            name: 'componentA',
+            price: 10,
+            offeredBy: 'entity2',
+            available: 4250
+        },
+        {
+            id: 'prodD',
+            name: 'componentD',
+            price: 16,
+            offeredBy: 'entity3',
+            available: 220
+        }
+    ]
+}, {
+    id: 'optCE',
+    status: OptionStatus.EXPIRED,
+    products: [{
+            id: 'prodC',
+            name: 'componentC',
+            price: 4,
+            offeredBy: 'entity3',
+            available: 6400
+        },
+        {
+            id: 'prodE',
+            name: 'componentE',
+            price: 2,
+            offeredBy: 'entity5',
+            available: 2380
+        }
+    ]
+}];
 
 const OrderStatus = {
     INFO_REQUESTED: 'INFO_REQUESTED',
@@ -94,37 +155,42 @@ const orders = [{
 
 const feedbacks = [{
     id: 'fo100',
+    product: 'prodB',
     productRating: 4.5,
+    orderNo: 'o10',
     deliveryRating: 4.6,
-    author: 'entity1',
-    orderNo: 'o10'
+    author: 'entity1'
 }, {
     id: 'fo110',
-    productRating: 4.6,
+    product: 'prodC',
+    productRating: null,
+    orderNo: 'o11',
     deliveryRating: 4.8,
-    author: 'entity1',
-    orderNo: 'o11'
+    author: 'entity1'
 }, {
     id: 'fo120',
+    product: 'prodA',
     productRating: 4.3,
-    deliveryRating: 4.2,
-    author: 'entity1',
-    orderNo: 'o12'
+    orderNo: 'o12',
+    deliveryRating: null,
+    author: 'entity1'
 }, {
     id: 'fo121',
+    product: 'prodD',
     productRating: 4.5,
+    orderNo: 'o12',
     deliveryRating: 4.7,
-    author: 'entity1',
-    orderNo: 'o12'
+    author: 'entity1'
 }]
 
 // Type definitions (schema)
 const typeDefs = `
     type Query {
         companies(query: String): [Company!]!
+        blockchainBlocks(query: String): [BlockchainBlock!]!
         options(query: String): [Option!]!
         orders(query: String): [Order]
-        feedbacks: [Feedback!]!
+        feedbacks(query: String): [Feedback!] !
     }
 
     type Mutation {
@@ -136,9 +202,18 @@ const typeDefs = `
         id: ID!
         name: String!
         location: String!
+        creditRating: String!,
         orders: [Order!]!
         products: [Product!]!
         feedbacks: [Feedback!]!
+    }
+
+    type BlockchainBlock {
+        id: ID!
+        marketplaceSignatureOnDeal: String!
+        previousHashOnDeal: String!
+        hashOnDeal: String!
+        nonce: Int!
     }
 
     type Product {
@@ -148,6 +223,7 @@ const typeDefs = `
         offeredBy: Company!
         available: Int
         orderedVolume: Int
+        productRating: Float
     }
 
     type Option {
@@ -168,10 +244,12 @@ const typeDefs = `
 
     type Feedback {
         id: ID!
-        productRating: Float!
-        deliveryRating: Float!
+        product: ID!
+        orderNo: ID!
+        deliveryRating: Float
+        productRating: Float
         author: Company!
-        orderNo: Order!
+        order: Order!
     }
 `
 
@@ -187,6 +265,15 @@ const resolvers = {
                 return company.name.toLowerCase().includes(args.query.toLowerCase())
             })
         },
+        blockchainBlocks(parent, args, ctx, info) {
+            if (!args.query) {
+                return blockchainBlocks
+            }
+
+            return blockchainBlocks.filter((blockchainBlock) => {
+                return blockchainBlock.id.toLowerCase().includes(args.query.toLowerCase())
+            })
+        },
         options(parent, args, ctx, info) {
             if (!args.query) {
                 return options
@@ -196,7 +283,7 @@ const resolvers = {
                 const isIdMatch = option.id.toLowerCase().includes(args.query.toLowerCase());
                 const isStatusMatch = option.status.toLowerCase().includes(args.query.toLowerCase());
                 const isProductsMatch = option.products.toString().toLowerCase().includes(args.query.toLowerCase());
-                return isIdMatch || isStatusMatch || isProducstMatch;
+                return isIdMatch || isStatusMatch || isProductsMatch;
             })
         },
         orders(parent, args, ctx, info) {
@@ -212,10 +299,85 @@ const resolvers = {
             })
         },
         feedbacks(parent, args, ctx, info) {
-            return feedbacks
+            if (!args.query) {
+                return feedbacks
+            }
+
+            return feedbacks.filter((feedback) => {
+                const isAuthorMatch = feedback.author.toLowerCase().includes(args.query.toLowerCase());
+                const isOrderIdMatch = feedback.orderNo.toLowerCase().includes(args.query.toLowerCase());
+                const isProductMatch = feedback.product.toString().toLowerCase().includes(args.query.toLowerCase());
+                return isAuthorMatch || isOrderIdMatch || isProductMatch;
+            })            
         }
     },
+    Mutation: {
+        createCompany(parent, args, ctx, info) {
+            const nameTaken = companies.some((company) => company.name === args.name)
 
+            if (nameTaken) {
+                throw new Error('Name taken')
+            }
+
+            const company = {
+                id: uuidv4(),
+                ...args
+            }
+
+            companies.push(company)
+
+            return company
+        },
+        // createProduct(parent, args, ctx, info) {
+        //     const nameTaken = products.some((product) => product.name === args.name)
+
+        //     if (nameTaken) {
+        //         throw new Error('Name taken')
+        //     }
+
+        //     const product = {
+        //         id: uuidv4(),
+        //         ...args
+        //     }
+
+        //     products.push(product)
+
+        //     return product
+        // },
+        // createOrder(parent, args, ctx, info) {
+        //     const companyExists = companies.some((company) => company.id === args.author)
+
+        //     if (!companyExists) {
+        //         throw new Error('Company not found')
+        //     }
+
+        //     const order = {
+        //         id: uuidv4(),
+        //         ...args
+        //     }
+
+        //     orders.push(order)
+
+        //     return order
+        // },
+        createFeedback(parent, args, ctx, info) {
+            const companyExists = companies.some((company) => company.id === args.author)
+            const orderExists = orders.some((orderNo) => order.id === args.order && order.placed)
+
+            if (!companyExists || !orderExists) {
+                throw new Error('Unable to find company and/or order')
+            }
+
+            const Feedback = {
+                id: uuidv4(),
+                ...args
+            }
+
+            feedbacks.push(Feedback)
+
+            return Feedback
+        }
+    },
     Order: {
         orderingCo(parent, args, ctx, info) {
             return companies.find((company) => {
@@ -242,7 +404,7 @@ const resolvers = {
                 return company.id === parent.author
             })
         },
-        orderNo(parent, args, ctx, info) {
+        order(parent, args, ctx, info) {
             return orders.find((order) => {
                 return order.id === parent.orderNo
             })
@@ -259,7 +421,7 @@ const resolvers = {
         // products(parent, args, ctx, info) {
         //     return optionDetails.products.filter((product) => {
         //         console.log('product ID ID', product.id);
-                
+
         //         return product.id.toString().includes(parent.id);
         //     })
         // }

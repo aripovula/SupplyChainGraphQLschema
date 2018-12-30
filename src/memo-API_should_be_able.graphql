@@ -19,6 +19,10 @@
 
 // 6. PROVIDE rating/feedback
 
+// 7. GENERATE BLOCK of its blockChaine to secure data on an Order
+
+// 8. COMPARE LAST 10 block chaine blocks between subscribers 
+
 
 // get delivery rating on all orders
 
@@ -62,5 +66,152 @@ orders(query: "o10") {
     productRating
   }
 }
+}  
+
+// this works
+
+query {
+  
+orders (query: "entity1") {
+  id
+  status
+  optionDetails{
+    id
+    status
+    products{
+      name
+      offeredBy{
+        name
+      }
+      available
+    }
+  }
+  feedbacks{
+    productRating
+    deliveryRating,
+  }
+}
+}  
+
+// all this works
+
+query {
+
+	companies {
+    name
+    creditRating
+    location
+  }
+
+  blockchainBlocks{
+    id
+    previousHashOnDeal
+    hashOnDeal
+    marketplaceSignatureOnDeal
+  }
+  
+options{
+  id
+  status
+  products{
+    name
+    offeredBy{
+      name
+    }
+    available
+    price
+  }
+}
+
+orders {
+  id
+  status
+  optionDetails{
+    id
+    status
+    products{
+      name
+      offeredBy{
+        name
+      }
+      available
+    }
+  }
+  feedbacks{
+    productRating
+    deliveryRating,
+  }
+}
+  feedbacks {
+    id
+    productRating
+    deliveryRating
+    orderNo
+    order{
+      volume
+    }
+    product
+  }
+}  
+
+// all queries wih 'query' params work
+
+query {
+
+	companies(query: "Assembler") {
+    name
+    creditRating
+    location
+  }
+
+  blockchainBlocks(query: "1"){
+    id
+    previousHashOnDeal
+    hashOnDeal
+    marketplaceSignatureOnDeal
+  }
+  
+options(query: "optBD"){
+  id
+  status
+  products{
+    name
+    offeredBy{
+      name
+    }
+    available
+    price
+  }
+}
+
+orders(query: "o11") {
+  id
+  status
+  optionDetails{
+    id
+    status
+    products{
+      name
+      offeredBy{
+        name
+      }
+      available
+    }
+  }
+  feedbacks{
+    productRating
+    deliveryRating,
+  }
+}
+  feedbacks(query: "prodD") {
+    id
+    productRating
+    deliveryRating
+    orderNo
+    order{
+      volume
+    }
+    product
+  }
 }  
 
