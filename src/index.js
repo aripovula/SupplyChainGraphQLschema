@@ -133,7 +133,7 @@ const orders = [{
     time2deliver: 120,
     status: OrderStatus.INFO_REQUESTED,
     orderingCo: 'entity1',
-    optionDetails: options[0],
+    optionDetails: 'optBD',
     feedbackID: 'fo100'
 }, {
     id: 'o11',
@@ -141,7 +141,7 @@ const orders = [{
     time2deliver: 240,
     status: OrderStatus.DELIVERED,
     orderingCo: 'entity1',
-    optionDetails: options[1],
+    optionDetails: 'optBD',
     feedbackID: 'fo110'
 }, {
     id: 'o12',
@@ -149,7 +149,7 @@ const orders = [{
     time2deliver: 120,
     status: OrderStatus.CONFIRMED_SHIPMENT_PENDING,
     orderingCo: 'entity2',
-    optionDetails: options[2],
+    optionDetails: 'optBD',
     feedbackID: 'fo120'
 }]
 
@@ -194,7 +194,9 @@ const typeDefs = `
     }
 
     type Mutation {
-        createCompany(name: String!, location: String!): Company!
+        createCompany(name: String!, location: String!, creditRating: String!): Company!
+        
+        createOrder(volume: Int!, time2deliver: Int!, status: String!, orderingCo: String!, optionDetails: ID!, feedbackID: String!): Order!
         createFeedback(productRating: Float!, deliveryRating: Float!, author: ID!, orderNo: ID!): Feedback!
     }
 
@@ -308,7 +310,7 @@ const resolvers = {
                 const isOrderIdMatch = feedback.orderNo.toLowerCase().includes(args.query.toLowerCase());
                 const isProductMatch = feedback.product.toString().toLowerCase().includes(args.query.toLowerCase());
                 return isAuthorMatch || isOrderIdMatch || isProductMatch;
-            })            
+            })
         }
     },
     Mutation: {
@@ -328,54 +330,35 @@ const resolvers = {
 
             return company
         },
-        // createProduct(parent, args, ctx, info) {
-        //     const nameTaken = products.some((product) => product.name === args.name)
-
-        //     if (nameTaken) {
-        //         throw new Error('Name taken')
-        //     }
-
-        //     const product = {
+        // createOptions(parent, args, ctx, info) {
+        //     const option = {
         //         id: uuidv4(),
         //         ...args
         //     }
 
-        //     products.push(product)
+        //     options.push(option)
 
-        //     return product
+        //     return option
         // },
-        // createOrder(parent, args, ctx, info) {
-        //     const companyExists = companies.some((company) => company.id === args.author)
-
-        //     if (!companyExists) {
-        //         throw new Error('Company not found')
-        //     }
-
-        //     const order = {
-        //         id: uuidv4(),
-        //         ...args
-        //     }
-
-        //     orders.push(order)
-
-        //     return order
-        // },
-        createFeedback(parent, args, ctx, info) {
-            const companyExists = companies.some((company) => company.id === args.author)
-            const orderExists = orders.some((orderNo) => order.id === args.order && order.placed)
-
-            if (!companyExists || !orderExists) {
-                throw new Error('Unable to find company and/or order')
-            }
-
-            const Feedback = {
+        createOrder(parent, args, ctx, info) {
+            const order = {
                 id: uuidv4(),
                 ...args
             }
 
-            feedbacks.push(Feedback)
+            orders.push(order)
 
-            return Feedback
+            return order
+        },
+        createFeedback(parent, args, ctx, info) {
+            const feedback = {
+                id: uuidv4(),
+                ...args
+            }
+
+            feedbacks.push(feedback)
+
+            return feedback
         }
     },
     Order: {
@@ -386,10 +369,10 @@ const resolvers = {
             });
         },
         optionDetails(parent, args, ctx, info) {
-            console.log('parent.optionDetails = ', parent.optionDetails.id);
+            console.log('parent.optionDetails = ', parent.optionDetails);
             return options.find((option) => {
                 console.log('option.id = ', option.id);
-                return option.id === parent.optionDetails.id
+                return option.id === parent.optionDetails
             });
         },
         feedbacks(parent, args, ctx, info) {
