@@ -187,6 +187,7 @@ const feedbacks = [{
 const typeDefs = `
     type Query {
         companies(query: String): [Company!]!
+        products(query: String): [Product!]!
         blockchainBlocks(query: String): [BlockchainBlock!]!
         options(query: String): [Option!]!
         orders(query: String): [Order]
@@ -194,12 +195,43 @@ const typeDefs = `
     }
 
     type Mutation {
-        createCompany(name: String!, location: String!, creditRating: String!): Company!
-        
-        createOrder(volume: Int!, time2deliver: Int!, status: String!, orderingCo: String!, optionDetails: ID!, feedbackID: String!): Order!
-        createFeedback(productRating: Float!, deliveryRating: Float!, author: ID!, orderNo: ID!): Feedback!
+        createCompany(data: createCompanyInput!): Company!
+        createOption(data: [createProductInput!]!): Option!
+        createOrder(data: createOrderInput!): Order!
+        createFeedback(data: createFeedbackInput!): Feedback!
     }
 
+    input createCompanyInput {
+        name: String!
+        location: String!
+        creditRating: String!
+    }
+
+    input createProductInput {
+        id: ID!
+        name: String!
+        price: Int!
+        offeredBy: ID!
+        available: Int!
+        status: String
+    }
+
+    input createOrderInput {
+        volume: Int!
+        time2deliver: Int!
+        status: String!
+        orderingCo: String!
+        optionDetails: ID!
+        feedbackID: String!
+    }
+
+    input createFeedbackInput {
+        productRating: Float!
+        deliveryRating: Float!
+        author: ID!
+        orderNo: ID!
+    }
+    
     type Company {
         id: ID!
         name: String!
@@ -226,6 +258,7 @@ const typeDefs = `
         available: Int
         orderedVolume: Int
         productRating: Float
+        status: String
     }
 
     type Option {
@@ -315,7 +348,7 @@ const resolvers = {
     },
     Mutation: {
         createCompany(parent, args, ctx, info) {
-            const nameTaken = companies.some((company) => company.name === args.name)
+            const nameTaken = companies.some((company) => company.name === args.data.name)
 
             if (nameTaken) {
                 throw new Error('Name taken')
@@ -323,27 +356,28 @@ const resolvers = {
 
             const company = {
                 id: uuidv4(),
-                ...args
+                ...args.data
             }
 
             companies.push(company)
 
             return company
         },
-        // createOptions(parent, args, ctx, info) {
-        //     const option = {
-        //         id: uuidv4(),
-        //         ...args
-        //     }
+        createOption(parent, args, ctx, info) {
+            const option = {
+                id: uuidv4(),
+                status: args.data[0].status,
+                products: args.data
+            }
 
-        //     options.push(option)
+            options.push(option)
 
-        //     return option
-        // },
+            return option
+        },
         createOrder(parent, args, ctx, info) {
             const order = {
                 id: uuidv4(),
-                ...args
+                ...args.data
             }
 
             orders.push(order)
@@ -353,7 +387,7 @@ const resolvers = {
         createFeedback(parent, args, ctx, info) {
             const feedback = {
                 id: uuidv4(),
-                ...args
+                ...args.data
             }
 
             feedbacks.push(feedback)
