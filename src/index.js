@@ -210,7 +210,7 @@ const typeDefs = `
     input createProductInput {
         id: ID!
         name: String!
-        price: Int!
+        price: Float!
         offeredBy: ID!
         available: Int!
         status: String
@@ -364,9 +364,20 @@ const resolvers = {
             return company
         },
         createOption(parent, args, ctx, info) {
+
+            const status = args.data[0].status;
+            // Below code removes 'status' from all array items not to pollute DB.
+            // if you query for 'status' after adding option 'null' will be shown. 
+            // But 'status': null should not be added to DB. See result of log below.
+            args.data.forEach((item) => {
+                delete item.status
+            });
+
+            console.log('args.data - ', args.data);
+            
             const option = {
                 id: uuidv4(),
-                status: args.data[0].status,
+                status,
                 products: args.data
             }
 
