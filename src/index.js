@@ -58,8 +58,8 @@ const blockchainBlocks = [{
 const OptionStatus = {
     EFFECTIVE: 'EFFECTIVE',
     ON_HOLD_30SEC: 'ON_HOLD_30SEC',
-    USED: 'USED_DO_NOT_DELETE',
-    EXPIRED: 'EXPIRED'
+    // USED: 'USED_DO_NOT_DELETE',
+    // EXPIRED: 'EXPIRED'
 }
 
 const options = [{
@@ -100,7 +100,7 @@ const options = [{
     ]
 }, {
     id: 'optCE',
-    status: OptionStatus.EXPIRED,
+    status: OptionStatus.ON_HOLD_30SEC,
     products: [{
             id: 'prodC',
             name: 'componentC',
@@ -197,6 +197,7 @@ const typeDefs = `
     type Mutation {
         createCompany(data: createCompanyInput!): Company!
         createOption(data: [createProductInput!]!): Option!
+        deleteOption(id: ID!): Option!
         createOrder(data: createOrderInput!): Order!
         createFeedback(data: createFeedbackInput!): Feedback!
     }
@@ -374,7 +375,7 @@ const resolvers = {
             });
 
             console.log('args.data - ', args.data);
-            
+
             const option = {
                 id: uuidv4(),
                 status,
@@ -394,6 +395,22 @@ const resolvers = {
             orders.push(order)
 
             return order
+        },
+        deleteOption(parent, args, ctx, info) {
+
+            const optionIndex = options.findIndex((option) => option.id === args.id);
+
+            if (optionIndex === -1) {
+                throw new Error('Option not found')
+            }
+            if (options[optionIndex].status === "ON_HOLD_30SEC") {
+                throw new Error('Can not delete now - someone is placing order. Try again in 30 seconds')
+            }
+            
+            const deletedOption = options.splice(optionIndex, 1);
+
+            return deletedOption[0];
+
         },
         createFeedback(parent, args, ctx, info) {
             const feedback = {

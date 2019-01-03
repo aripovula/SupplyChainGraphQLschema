@@ -1,0 +1,102 @@
+
+    type Company @model @auth(rules: [{allow: id}]) {
+        id: ID!
+        name: String!
+        locationZipCode: String!
+        creditRating: CreditRating!,
+        orders: [Order!]!
+        products: [Product!]!
+        feedbacks: [Feedback!]!
+    }
+
+    type BlockchainBlock @model{
+        id: ID!
+        marketplaceSignatureOnDeal: String!
+        previousHashOnDeal: String!
+        hashOnDeal: String!
+        nonce: Int!
+    }
+
+    type Product @model {
+        id: ID!
+        name: String!
+        price: Float!
+        offeredBy: Company!
+        available: Int
+        orderedVolume: Int
+        productRating: Float
+        status: OptionStatus
+    }
+
+    type Option @model{
+        id: ID!
+        status: OptionStatus!
+        products: [Product!]!
+    }
+
+    type Order @model{
+        id: ID!
+        orderingCo: Company!
+        optionDetails: Option!
+        status: OrderStatus!,
+        volume: Int!
+        time2deliver: Int!
+        feedbacks: [Feedback]
+    }
+
+    type Feedback @model{
+        id: ID!
+        product: ID
+        orderNo: ID!
+        deliveryRating: Float!
+        productRating: Float
+        author: Company!
+        order: Order
+    }
+
+    type CreditSaleRule @model{
+        id: ID!
+        limitForAAA: Int!
+        limitForAA: Int!
+        limitForA: Int!
+        limitForBBB: Int!
+        limitForBB: Int!
+        limitForB: Int!
+    }
+
+    type BestOptionRule @model{
+        id: ID!
+        bestOptionType: BestOptionEnum!
+        minDeliveryRating: Float
+        minProductRating: Float
+    }
+
+    enum CreditRating {
+      AAA
+      AA
+      A
+      BBB
+      BB
+      B
+    }
+
+    enum OptionStatus {
+      EFFECTIVE
+      ON_HOLD_30SEC
+    }
+
+    enum OrderStatus {
+        INFO_REQUESTED
+        PURCHASE_APPROVAL_PENDING
+        CONFIRMED_SHIPMENT_PENDING
+        SHIPPED
+        DELIVERED
+        REJECTED
+    }
+
+  enum BestOptionEnum {
+    LEAST_PRICE
+    FASTEST
+    BEST_DELIVERY_RATING
+    BEST_PRODUCT_RATING
+  }
